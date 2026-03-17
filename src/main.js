@@ -638,7 +638,7 @@ async function sendChatMessage() {
     setTimeout(() => speechBubble.classList.remove('pop'), 400)
     chatInput.value = ''
   } catch (e) {
-    speechBubble.textContent = 'うまいこと話せんかったわ…'
+    speechBubble.textContent = `エラー: ${e.message}`
   } finally {
     btnChatSend.disabled = false
     chatInput.disabled   = false

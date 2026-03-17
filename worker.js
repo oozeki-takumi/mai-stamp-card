@@ -54,7 +54,8 @@ ${isGrumpy ? '- 今は寝てるところを起こされて不機嫌な状態で�
         })
 
         if (!response.ok) {
-          throw new Error(`Anthropic API error: ${response.status}`)
+          const errBody = await response.text()
+          throw new Error(`Anthropic ${response.status}: ${errBody.slice(0, 100)}`)
         }
 
         const data = await response.json()
@@ -64,7 +65,7 @@ ${isGrumpy ? '- 今は寝てるところを起こされて不機嫌な状態で�
           headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         })
       } catch (e) {
-        return new Response(JSON.stringify({ reply: 'ちゅ…（うまく話せなかった）' }), {
+        return new Response(JSON.stringify({ reply: `エラー: ${e.message}` }), {
           status: 500,
           headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         })
