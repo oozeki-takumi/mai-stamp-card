@@ -375,7 +375,7 @@ body {
 .hamster-arena {
   position: relative;
   height: 120px;
-  background: linear-gradient(180deg, #fff5f9 60%, #ffe4f0 100%);
+  background: url('/hamu_room.png') center / cover no-repeat;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid #f0bcd4;
@@ -533,6 +533,57 @@ body {
 .btn-buy-feed:disabled,
 .btn-give-feed:disabled {
   opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== ハムスターチャット ===== */
+.hamster-chat {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #f0bcd4;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: var(--pink);
+}
+
+.chat-input::placeholder {
+  color: #ccc;
+}
+
+.btn-chat-send {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--pink);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255,126,179,0.4);
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-chat-send:active {
+  transform: scale(0.95);
+}
+
+.btn-chat-send:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }

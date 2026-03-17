@@ -37,10 +37,10 @@ const CARDS = {
 
 // ===== ハムスターセリフ =====
 const SPEECH = {
-  hungry:  ['おなかすいた〜！', 'ごはんください…', 'ちゅうちゅう…', 'くうくう…'],
-  normal:  ['まいちゃん！', 'げんきだよ〜！', 'ちゅっちゅ！', 'ひまだにゃ〜', 'あそんで〜！'],
-  full:    ['おいしかった！', 'まんぷく〜！', 'ありがとう！', 'しあわせ〜💕'],
-  stamped: ['やったね！🌸', 'すごい！すごい！', 'がんばったね！'],
+  hungry:  ['腹減ったわ〜！', 'めし食わせてくれへん？', 'もうアカン…腹ペコや', 'はよ食わせてや〜'],
+  normal:  ['やあやあ！', 'まあまあ元気やで〜', 'ひまやなあ', 'なんかせえへんか〜', 'おっさん暇やで！'],
+  full:    ['うまかったわ〜！', '満腹や〜！', 'ありがとさん！', 'ええ気分やで〜💕'],
+  stamped: ['よっしゃ！🌸', 'ナイスやないか！', 'やるやんけ〜！'],
 }
 
 // ===== Firebase 初期化 =====
@@ -68,6 +68,8 @@ const btnGiveFeed     = document.getElementById('btnGiveFeed')
 const speechBubble    = document.getElementById('speechBubble')
 const hamsterX        = document.getElementById('hamsterX')
 const hamsterSprite   = document.getElementById('hamsterSprite')
+const chatInput       = document.getElementById('chatInput')
+const btnChatSend     = document.getElementById('btnChatSend')
 
 // ===== タブ切り替え =====
 let activeCardId = 'home_card'
@@ -353,6 +355,46 @@ function spawnParticles() {
     el.addEventListener('animationend', () => el.remove())
   }
 }
+
+// ===== ハムスターAIチャット =====
+async function sendChatMessage() {
+  const message = chatInput.value.trim()
+  if (!message) return
+
+  btnChatSend.disabled = true
+  chatInput.disabled = true
+
+  // 考え中セリフ
+  speechBubble.textContent = 'ちょっと待ちいや〜'
+  speechBubble.classList.add('pop')
+  setTimeout(() => speechBubble.classList.remove('pop'), 400)
+
+  try {
+    const { hunger, exp, coins } = hamsterData
+    const level = Math.floor(exp / 100) + 1
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, hunger, level, coins }),
+    })
+    const data = await res.json()
+    speechBubble.textContent = data.reply
+    speechBubble.classList.add('pop')
+    setTimeout(() => speechBubble.classList.remove('pop'), 400)
+    chatInput.value = ''
+  } catch (e) {
+    speechBubble.textContent = 'うまいこと話せんかったわ…'
+  } finally {
+    btnChatSend.disabled = false
+    chatInput.disabled = false
+    chatInput.focus()
+  }
+}
+
+btnChatSend.addEventListener('click', sendChatMessage)
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage()
+})
 
 // ===== エラー表示 =====
 function showError(msg) {
