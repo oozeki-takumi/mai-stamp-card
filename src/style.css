@@ -1,3 +1,69 @@
+/* ===== 起動オーバーレイ ===== */
+#startOverlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, #ffe0f0 0%, #fff5f9 60%, #ffd6ee 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.4s ease;
+}
+
+#startOverlay.hidden-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#startBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px 32px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 24px;
+  box-shadow: 0 8px 40px rgba(255,126,179,0.25);
+}
+
+.start-hamster {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.start-name {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #e05a90;
+  letter-spacing: 0.1em;
+}
+
+.start-msg {
+  font-size: 1rem;
+  color: #7a4060;
+  font-weight: 600;
+}
+
+#btnStart {
+  margin-top: 8px;
+  padding: 14px 36px;
+  background: linear-gradient(135deg, #ff7eb3, #e05a90);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255,126,179,0.4);
+  transition: transform 0.1s;
+}
+
+#btnStart:active {
+  transform: scale(0.96);
+}
+
 /* ===== リセット & ベース ===== */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -496,23 +562,35 @@ body {
   white-space: nowrap;
 }
 
-/* ===== ☆星表示 ===== */
-.hunger-stars {
+/* ===== 空腹プログレスバー ===== */
+.hunger-bar-track {
   flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
-  line-height: 1;
+  height: 16px;
+  background: #eee;
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid #ddd;
 }
 
-.star-icon {
-  font-size: 0.58rem;
-  color: #ddd;
-  line-height: 1;
+.hunger-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #56d364, #a8f0b0);
+  transition: width 0.5s ease, background 0.5s ease;
 }
 
-.star-icon.filled {
-  color: #f5c518;
+.hunger-bar-fill.warning {
+  background: linear-gradient(90deg, #f0a030, #f5c842);
+}
+
+.hunger-bar-fill.danger {
+  background: linear-gradient(90deg, #e04040, #f07070);
+  animation: barPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes barPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.6; }
 }
 
 .hunger-count {

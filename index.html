@@ -2,13 +2,26 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>まいちゃんスタンプカード</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <!-- BGM -->
   <audio id="bgm" src="/BGM.mp3" loop></audio>
+
+  <!-- 起動オーバーレイ -->
+  <div id="startOverlay">
+    <div id="startBox">
+      <div class="start-hamster">🐹</div>
+      <div class="start-name">だいふく</div>
+      <p class="start-msg">アプリを起動します</p>
+      <button id="btnStart">タップしてはじめる ▶</button>
+    </div>
+  </div>
 
   <div id="app">
     <header class="header">
@@ -52,9 +65,11 @@
           <span class="stat-item">💰 <span id="coinsDisplay">0</span> コイン</span>
         </div>
         <div class="hunger-row">
-          <span class="hunger-label">🌟</span>
-          <div class="hunger-stars" id="hungerStars"></div>
-          <span class="hunger-count" id="hungerCount">24/24</span>
+          <span class="hunger-label">🍽️ お腹</span>
+          <div class="hunger-bar-track">
+            <div class="hunger-bar-fill" id="hungerBarFill"></div>
+          </div>
+          <span class="hunger-count" id="hungerCount">10/24</span>
         </div>
       </div>
 

@@ -54,13 +54,20 @@ const db  = getFirestore(app)
 
 // ===== BGM =====
 const bgm = document.getElementById('bgm')
-let bgmStarted = false
-function startBGM() {
-  if (bgmStarted) return
-  bgm.play().then(() => { bgmStarted = true }).catch(() => {})
-}
-document.addEventListener('click', startBGM, { once: true })
-document.addEventListener('touchstart', startBGM, { once: true })
+
+// ===== 起動ダイアログ =====
+const startOverlay = document.getElementById('startOverlay')
+const btnStart     = document.getElementById('btnStart')
+btnStart.addEventListener('click', () => {
+  bgm.play().catch(() => {})
+  // フルスクリーン要求
+  const el = document.documentElement
+  if (el.requestFullscreen) el.requestFullscreen()
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+  // オーバーレイを消す
+  startOverlay.classList.add('hidden-overlay')
+  setTimeout(() => startOverlay.remove(), 400)
+})
 
 // ===== DOM 要素 =====
 const adminPanel       = document.getElementById('adminPanel')
@@ -77,7 +84,7 @@ const submitArea       = document.getElementById('submitArea')
 const btnSubmit        = document.getElementById('btnSubmit')
 const coinsDisplay     = document.getElementById('coinsDisplay')
 const shopCoinsDisplay = document.getElementById('shopCoinsDisplay')
-const hungerStars      = document.getElementById('hungerStars')
+const hungerBarFill    = document.getElementById('hungerBarFill')
 const hungerCount      = document.getElementById('hungerCount')
 const itemList         = document.getElementById('itemList')
 const btnShop          = document.getElementById('btnShop')
@@ -328,14 +335,11 @@ function renderHamsterStats() {
   shopCoinsDisplay.textContent = coins
   hungerCount.textContent      = `${h}/24`
 
-  // ☆星表示
-  hungerStars.innerHTML = ''
-  for (let i = 0; i < 24; i++) {
-    const star = document.createElement('span')
-    star.className = 'star-icon' + (i < h ? ' filled' : '')
-    star.textContent = i < h ? '★' : '☆'
-    hungerStars.appendChild(star)
-  }
+  // 空腹プログレスバー
+  const pct = (h / 24) * 100
+  hungerBarFill.style.width = `${pct}%`
+  hungerBarFill.className = 'hunger-bar-fill' +
+    (h <= 6 ? ' danger' : h <= 12 ? ' warning' : '')
 
   // ハムスター画像
   hamsterSprite.src = getHamsterImage()
