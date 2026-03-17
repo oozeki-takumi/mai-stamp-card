@@ -8,6 +8,7 @@ import {
   updateDoc,
   addDoc,
   deleteDoc,
+  increment,
   serverTimestamp,
 } from 'firebase/firestore'
 import { firebaseConfig } from './firebase-config.js'
@@ -34,28 +35,50 @@ const CARDS = {
   },
 }
 
+// ===== ハムスターセリフ =====
+const SPEECH = {
+  hungry:  ['おなかすいた〜！', 'ごはんください…', 'ちゅうちゅう…', 'くうくう…'],
+  normal:  ['まいちゃん！', 'げんきだよ〜！', 'ちゅっちゅ！', 'ひまだにゃ〜', 'あそんで〜！'],
+  full:    ['おいしかった！', 'まんぷく〜！', 'ありがとう！', 'しあわせ〜💕'],
+  stamped: ['やったね！🌸', 'すごい！すごい！', 'がんばったね！'],
+}
+
 // ===== Firebase 初期化 =====
 const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
+const db  = getFirestore(app)
 
 // ===== DOM 要素 =====
-const adminPanel    = document.getElementById('adminPanel')
-const pendingEl     = document.getElementById('pendingRequests')
-const btnResetHome  = document.getElementById('btnResetHome')
-const btnResetTogether = document.getElementById('btnResetTogether')
-const modal         = document.getElementById('modal')
-const modalText     = document.getElementById('modalText')
-const modalClose    = document.getElementById('modalClose')
-const particles     = document.getElementById('particles')
+const adminPanel      = document.getElementById('adminPanel')
+const pendingEl       = document.getElementById('pendingRequests')
+const btnResetHome    = document.getElementById('btnResetHome')
+const btnResetTogether= document.getElementById('btnResetTogether')
+const modal           = document.getElementById('modal')
+const modalText       = document.getElementById('modalText')
+const modalClose      = document.getElementById('modalClose')
+const particles       = document.getElementById('particles')
+const submitArea      = document.getElementById('submitArea')
+const btnSubmit       = document.getElementById('btnSubmit')
+const coinsDisplay    = document.getElementById('coinsDisplay')
+const levelDisplay    = document.getElementById('levelDisplay')
+const feedDisplay     = document.getElementById('feedDisplay')
+const hungerFill      = document.getElementById('hungerFill')
+const hungerPct       = document.getElementById('hungerPct')
+const btnBuyFeed      = document.getElementById('btnBuyFeed')
+const btnGiveFeed     = document.getElementById('btnGiveFeed')
+const speechBubble    = document.getElementById('speechBubble')
+const hamsterX        = document.getElementById('hamsterX')
+const hamsterSprite   = document.getElementById('hamsterSprite')
 
 // ===== タブ切り替え =====
+let activeCardId = 'home_card'
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
-    const cardId = btn.dataset.card
-    document.getElementById('homeStamps').classList.toggle('hidden', cardId !== 'home_card')
-    document.getElementById('togetherStamps').classList.toggle('hidden', cardId !== 'together_card')
+    activeCardId = btn.dataset.card
+    document.getElementById('homeStamps').classList.toggle('hidden', activeCardId !== 'home_card')
+    document.getElementById('togetherStamps').classList.toggle('hidden', activeCardId !== 'together_card')
+    updateSubmitButton()
   })
 })
 
@@ -69,9 +92,16 @@ if (isAdmin) {
 }
 
 // ===== State =====
-const cardStates    = { home_card: [false, false, false], together_card: [false, false, false] }
-const completedCards = new Set()
-let pendingRequests = {}
+const cardStates     = { home_card: [false, false, false], together_card: [false, false, false] }
+let pendingRequests  = {}
+let hamsterData      = { coins: 0, exp: 0, hunger: 50, feed: 0 }
+
+// ===== 提出ボタン表示制御 =====
+function updateSubmitButton() {
+  if (isAdmin) return
+  const allDone = cardStates[activeCardId].every(s => s)
+  submitArea.classList.toggle('hidden', !allDone)
+}
 
 // ===== カード描画 =====
 function renderCard(cardId) {
@@ -95,7 +125,6 @@ function renderCard(cardId) {
     cell.appendChild(slot)
     cell.appendChild(text)
 
-    // まいちゃん用「お願いする」ボタン
     if (!isAdmin && !state[i]) {
       const isPending = Object.values(pendingRequests).some(
         r => r.cardId === cardId && r.stampIndex === i
@@ -110,6 +139,8 @@ function renderCard(cardId) {
 
     container.appendChild(cell)
   })
+
+  updateSubmitButton()
 }
 
 // ===== Firestore 監視: カードデータ =====
@@ -120,46 +151,106 @@ Object.keys(CARDS).forEach(cardId => {
       setDoc(ref, { stamps: [false, false, false] })
       return
     }
-    const stamps = snap.data().stamps ?? [false, false, false]
-    const wasComplete = completedCards.has(cardId)
-    cardStates[cardId] = stamps
+    cardStates[cardId] = snap.data().stamps ?? [false, false, false]
     renderCard(cardId)
-
-    // コンプリート判定
-    if (stamps.every(s => s) && !wasComplete) {
-      completedCards.add(cardId)
-      const title = CARDS[cardId].title
-      modalText.innerHTML = `おめでとう！<br>${title}<br>コンプリート！🌸`
-      modal.style.display = 'flex'
-      spawnParticles()
-    }
   }, err => showError(`Firebase 接続エラー: ${err.message}`))
 })
 
-// ===== Firestore 監視: スタンプリクエスト =====
+// ===== Firestore 監視: リクエスト =====
 let isFirstLoad = true
 onSnapshot(collection(db, 'stampRequests'), snap => {
-  const newRequests = {}
-  snap.forEach(d => { newRequests[d.id] = { ...d.data(), id: d.id } })
-
-  // 管理者への通知（新規リクエストが来たとき）
   if (!isFirstLoad && isAdmin) {
-    const addedCount = snap.docChanges().filter(c => c.type === 'added').length
-    if (addedCount > 0 && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification('まいちゃんからスタンプのお願いが届きました！', {
-        body: 'スタンプカードを確認してください 🌸',
-      })
+    const added = snap.docChanges().filter(c => c.type === 'added').length
+    if (added > 0 && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('まいちゃんからスタンプのお願いが届きました！', { body: 'スタンプカードを確認してください 🌸' })
     }
   }
   isFirstLoad = false
-
-  pendingRequests = newRequests
-
-  // カード再描画（ボタン状態更新）
+  pendingRequests = {}
+  snap.forEach(d => { pendingRequests[d.id] = { ...d.data(), id: d.id } })
   Object.keys(CARDS).forEach(cardId => renderCard(cardId))
-
   if (isAdmin) renderPendingList()
 }, err => showError(`リクエスト監視エラー: ${err.message}`))
+
+// ===== Firestore 監視: ハムスターデータ =====
+const hamsterRef = doc(db, 'hamster', 'data')
+onSnapshot(hamsterRef, snap => {
+  if (!snap.exists()) {
+    setDoc(hamsterRef, { coins: 0, exp: 0, hunger: 50, feed: 0 })
+    return
+  }
+  hamsterData = { coins: 0, exp: 0, hunger: 50, feed: 0, ...snap.data() }
+  renderHamsterStats()
+}, err => showError(`ハムスターデータエラー: ${err.message}`))
+
+// ===== ハムスターステータス描画 =====
+function renderHamsterStats() {
+  const { coins, exp, hunger, feed } = hamsterData
+  const level = Math.floor(exp / 100) + 1
+  const h = Math.min(100, Math.max(0, hunger))
+
+  coinsDisplay.textContent = coins
+  levelDisplay.textContent = level
+  feedDisplay.textContent  = feed
+  hungerFill.style.width   = h + '%'
+  hungerPct.textContent    = h + '%'
+
+  // 空腹度で色変化
+  hungerFill.style.background = h < 30 ? '#ff6b6b' : h > 70 ? '#4caf50' : '#ffb347'
+
+  btnBuyFeed.disabled  = coins < 100
+  btnGiveFeed.disabled = feed <= 0
+}
+
+// ===== 提出ボタン =====
+btnSubmit.addEventListener('click', async () => {
+  btnSubmit.disabled = true
+  try {
+    await setDoc(doc(db, 'stampCards', activeCardId), { stamps: [false, false, false] })
+    await updateDoc(hamsterRef, { coins: increment(1000) })
+    modalText.innerHTML = `🌸 ${CARDS[activeCardId].title}<br>コンプリート！<br><span style="font-size:1.4rem">💰 1000コインゲット！</span>`
+    modal.style.display = 'flex'
+    spawnParticles()
+    showSpeech('stamped')
+  } catch (e) {
+    showError(`提出失敗: ${e.message}`)
+  } finally {
+    btnSubmit.disabled = false
+  }
+})
+
+// ===== 餌を買う =====
+btnBuyFeed.addEventListener('click', async () => {
+  if (hamsterData.coins < 100) return
+  btnBuyFeed.disabled = true
+  try {
+    await updateDoc(hamsterRef, { coins: increment(-100), feed: increment(1) })
+  } catch (e) {
+    showError(`購入失敗: ${e.message}`)
+  } finally {
+    btnBuyFeed.disabled = false
+  }
+})
+
+// ===== 餌をあげる =====
+btnGiveFeed.addEventListener('click', async () => {
+  if (hamsterData.feed <= 0) return
+  btnGiveFeed.disabled = true
+  const newHunger = Math.min(100, hamsterData.hunger + 20)
+  try {
+    await updateDoc(hamsterRef, {
+      feed:   increment(-1),
+      exp:    increment(20),
+      hunger: newHunger,
+    })
+    showSpeech('full')
+    spawnParticles()
+  } catch (e) {
+    showError(`エサ失敗: ${e.message}`)
+  } finally {
+    btnGiveFeed.disabled = false
+  }
+})
 
 // ===== 管理者: リクエスト一覧 =====
 function renderPendingList() {
@@ -168,44 +259,33 @@ function renderPendingList() {
     pendingEl.innerHTML = '<p class="no-requests">リクエストなし</p>'
     return
   }
-
   pendingEl.innerHTML = '<h3 class="pending-title">📬 スタンプのお願い</h3>'
   list.forEach(req => {
-    const cardDef = CARDS[req.cardId]
-    const label = cardDef?.stamps[req.stampIndex] ?? '?'
-    const cardTitle = cardDef?.title ?? req.cardId
-
+    const cardDef  = CARDS[req.cardId]
+    const label    = cardDef?.stamps[req.stampIndex] ?? '?'
+    const cardTitle= cardDef?.title ?? req.cardId
     const item = document.createElement('div')
     item.className = 'request-item'
-
     const info = document.createElement('span')
     info.textContent = `${cardTitle}：「${label}」`
-
     const btn = document.createElement('button')
     btn.className = 'btn-stamp'
     btn.textContent = 'スタンプを押す'
     btn.addEventListener('click', () => approveRequest(req))
-
     item.appendChild(info)
     item.appendChild(btn)
     pendingEl.appendChild(item)
   })
 }
 
-// ===== スタンプリクエスト送信 =====
 async function requestStamp(cardId, stampIndex) {
   try {
-    await addDoc(collection(db, 'stampRequests'), {
-      cardId,
-      stampIndex,
-      requestedAt: serverTimestamp(),
-    })
+    await addDoc(collection(db, 'stampRequests'), { cardId, stampIndex, requestedAt: serverTimestamp() })
   } catch (e) {
     showError(`リクエスト失敗: ${e.message}`)
   }
 }
 
-// ===== リクエスト承認（スタンプ押す） =====
 async function approveRequest(req) {
   try {
     const stamps = [...cardStates[req.cardId]]
@@ -218,24 +298,39 @@ async function approveRequest(req) {
   }
 }
 
-// ===== リセットボタン =====
+// ===== リセット =====
 btnResetHome.addEventListener('click', async () => {
   if (!confirm('おうちスタンプをリセットしますか？')) return
   await setDoc(doc(db, 'stampCards', 'home_card'), { stamps: [false, false, false] })
-  completedCards.delete('home_card')
-  modal.style.display = 'none'
 })
-
 btnResetTogether.addEventListener('click', async () => {
   if (!confirm('一緒スタンプをリセットしますか？')) return
   await setDoc(doc(db, 'stampCards', 'together_card'), { stamps: [false, false, false] })
-  completedCards.delete('together_card')
-  modal.style.display = 'none'
+})
+modalClose.addEventListener('click', () => { modal.style.display = 'none' })
+
+// ===== ハムスター移動アニメーション =====
+let facingRight = true
+hamsterX.addEventListener('animationiteration', () => {
+  facingRight = !facingRight
+  hamsterSprite.style.transform = facingRight ? 'scaleX(1)' : 'scaleX(-1)'
 })
 
-modalClose.addEventListener('click', () => {
-  modal.style.display = 'none'
-})
+// ===== セリフ表示 =====
+function showSpeech(mood) {
+  const list = SPEECH[mood] ?? SPEECH.normal
+  speechBubble.textContent = list[Math.floor(Math.random() * list.length)]
+  speechBubble.classList.add('pop')
+  setTimeout(() => speechBubble.classList.remove('pop'), 400)
+}
+
+function autoSpeech() {
+  const h = hamsterData.hunger
+  const mood = h < 30 ? 'hungry' : h > 70 ? 'full' : 'normal'
+  showSpeech(mood)
+}
+autoSpeech()
+setInterval(autoSpeech, 7000)
 
 // ===== キラキラパーティクル =====
 function spawnParticles() {

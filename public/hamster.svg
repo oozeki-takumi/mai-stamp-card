@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 80" width="96" height="80" shape-rendering="crispEdges">
+  <!-- オリジナルピクセルアートハムスター (12x10 grid, 8px/cell) -->
+  <!-- Row 0: 耳の上 -->
+  <rect x="16" y="0" width="8" height="8" fill="#2C1810"/>
+  <rect x="72" y="0" width="8" height="8" fill="#2C1810"/>
+  <!-- Row 1: 耳 -->
+  <rect x="8"  y="8" width="8" height="8" fill="#2C1810"/>
+  <rect x="16" y="8" width="8" height="8" fill="#8B5E3C"/>
+  <rect x="24" y="8" width="8" height="8" fill="#2C1810"/>
+  <rect x="64" y="8" width="8" height="8" fill="#2C1810"/>
+  <rect x="72" y="8" width="8" height="8" fill="#8B5E3C"/>
+  <rect x="80" y="8" width="8" height="8" fill="#2C1810"/>
+  <!-- Row 2: 頭の上 -->
+  <rect x="0"  y="16" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="16" width="24" height="8" fill="#8B5E3C"/>
+  <rect x="32" y="16" width="8"  height="8" fill="#2C1810"/>
+  <rect x="56" y="16" width="8"  height="8" fill="#2C1810"/>
+  <rect x="64" y="16" width="24" height="8" fill="#8B5E3C"/>
+  <rect x="88" y="16" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 3: 頭 -->
+  <rect x="0"  y="24" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="24" width="80" height="8" fill="#8B5E3C"/>
+  <rect x="88" y="24" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 4: 顔（ほっぺた） -->
+  <rect x="0"  y="32" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="32" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="16" y="32" width="64" height="8" fill="#D4956A"/>
+  <rect x="80" y="32" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="88" y="32" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 5: 目 -->
+  <rect x="0"  y="40" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="40" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="16" y="40" width="8"  height="8" fill="#D4956A"/>
+  <rect x="24" y="40" width="8"  height="8" fill="#1A0A00"/>
+  <rect x="32" y="40" width="32" height="8" fill="#D4956A"/>
+  <rect x="64" y="40" width="8"  height="8" fill="#1A0A00"/>
+  <rect x="72" y="40" width="8"  height="8" fill="#D4956A"/>
+  <rect x="80" y="40" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="88" y="40" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 6: 鼻 -->
+  <rect x="0"  y="48" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="48" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="16" y="48" width="24" height="8" fill="#D4956A"/>
+  <rect x="40" y="48" width="16" height="8" fill="#CC2200"/>
+  <rect x="56" y="48" width="24" height="8" fill="#D4956A"/>
+  <rect x="80" y="48" width="8"  height="8" fill="#8B5E3C"/>
+  <rect x="88" y="48" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 7: 口まわり -->
+  <rect x="0"  y="56" width="8"  height="8" fill="#2C1810"/>
+  <rect x="8"  y="56" width="16" height="8" fill="#8B5E3C"/>
+  <rect x="24" y="56" width="48" height="8" fill="#D4956A"/>
+  <rect x="72" y="56" width="16" height="8" fill="#8B5E3C"/>
+  <rect x="88" y="56" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 8: 胴体 -->
+  <rect x="8"  y="64" width="8"  height="8" fill="#2C1810"/>
+  <rect x="16" y="64" width="16" height="8" fill="#8B5E3C"/>
+  <rect x="32" y="64" width="32" height="8" fill="#D4956A"/>
+  <rect x="64" y="64" width="16" height="8" fill="#8B5E3C"/>
+  <rect x="80" y="64" width="8"  height="8" fill="#2C1810"/>
+  <!-- Row 9: 足 -->
+  <rect x="16" y="72" width="16" height="8" fill="#2C1810"/>
+  <rect x="40" y="72" width="16" height="8" fill="#2C1810"/>
+  <rect x="64" y="72" width="16" height="8" fill="#2C1810"/>
+</svg>

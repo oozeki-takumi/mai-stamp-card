@@ -329,3 +329,210 @@ body {
   text-align: center;
   width: 100%;
 }
+
+/* ===== 提出ボタン ===== */
+#submitArea {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-submit {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-d) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255,126,179,0.5);
+  animation: pulse 1.4s ease-in-out infinite;
+  transition: transform 0.1s;
+}
+
+.btn-submit:active {
+  transform: scale(0.95);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 4px 18px rgba(255,126,179,0.5); }
+  50%       { box-shadow: 0 4px 28px rgba(255,126,179,0.85); }
+}
+
+/* ===== ハムスターセクション ===== */
+.hamster-section {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(255,126,179,0.18);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ===== ハムスターアリーナ ===== */
+.hamster-arena {
+  position: relative;
+  height: 120px;
+  background: linear-gradient(180deg, #fff5f9 60%, #ffe4f0 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #f0bcd4;
+}
+
+/* 吹き出し */
+.speech-bubble {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 2px solid var(--pink);
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pink-d);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(255,126,179,0.2);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.speech-bubble.pop {
+  animation: bubblePop 0.4s cubic-bezier(0.36,0.07,0.19,0.97) both;
+}
+
+@keyframes bubblePop {
+  0%   { transform: translateX(-50%) scale(0.7); }
+  60%  { transform: translateX(-50%) scale(1.12); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ハムスター水平移動 */
+.hamster-x {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  animation: moveX 4s ease-in-out infinite alternate;
+}
+
+@keyframes moveX {
+  from { left: 4px; }
+  to   { left: calc(100% - 100px); }
+}
+
+/* ハムスターバウンス */
+.hamster-y {
+  animation: bounceY 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes bounceY {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-6px); }
+}
+
+.hamster-sprite {
+  width: 80px;
+  height: auto;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* ===== ステータス ===== */
+.hamster-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.stat-item {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hunger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hunger-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hunger-bar {
+  flex: 1;
+  height: 14px;
+  background: #f0e0ea;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.hunger-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: #ffb347;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.hunger-pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #999;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ===== 餌ボタン ===== */
+.hamster-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-buy-feed,
+.btn-give-feed {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-buy-feed {
+  background: var(--yellow);
+  color: #7a5800;
+  box-shadow: 0 2px 8px rgba(255,224,102,0.5);
+}
+
+.btn-give-feed {
+  background: #b5f5c8;
+  color: #1a6635;
+  box-shadow: 0 2px 8px rgba(100,220,140,0.4);
+}
+
+.btn-buy-feed:active,
+.btn-give-feed:active {
+  transform: scale(0.95);
+}
+
+.btn-buy-feed:disabled,
+.btn-give-feed:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}

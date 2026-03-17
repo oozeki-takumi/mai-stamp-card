@@ -23,8 +23,42 @@
       <section class="stamp-card">
         <div class="stamp-grid" id="homeStamps"></div>
         <div class="stamp-grid hidden" id="togetherStamps"></div>
+        <!-- 提出ボタン (全スタンプ達成時に表示) -->
+        <div id="submitArea" class="hidden">
+          <button class="btn-submit" id="btnSubmit">🎉 提出する！</button>
+        </div>
       </section>
     </main>
+
+    <!-- ハムスターセクション -->
+    <section class="hamster-section">
+      <div class="hamster-arena" id="hamsterArena">
+        <div class="speech-bubble" id="speechBubble">ちゅっちゅ！</div>
+        <div class="hamster-x" id="hamsterX">
+          <div class="hamster-y">
+            <img class="hamster-sprite" id="hamsterSprite" src="/hamster.svg" alt="ハムスター"/>
+          </div>
+        </div>
+      </div>
+      <div class="hamster-stats">
+        <div class="stat-row">
+          <span class="stat-item">💰 <span id="coinsDisplay">0</span> コイン</span>
+          <span class="stat-item">⭐ Lv.<span id="levelDisplay">1</span></span>
+          <span class="stat-item">🌾 ×<span id="feedDisplay">0</span></span>
+        </div>
+        <div class="hunger-row">
+          <span class="hunger-label">🍴 満腹</span>
+          <div class="hunger-bar">
+            <div class="hunger-fill" id="hungerFill" style="width:50%"></div>
+          </div>
+          <span class="hunger-pct" id="hungerPct">50%</span>
+        </div>
+      </div>
+      <div class="hamster-actions">
+        <button class="btn-buy-feed" id="btnBuyFeed">餌を買う (-100コイン)</button>
+        <button class="btn-give-feed" id="btnGiveFeed">餌をあげる 🌾</button>
+      </div>
+    </section>
 
     <!-- 管理者パネル -->
     <div class="admin-panel" id="adminPanel" style="display:none">
@@ -35,12 +69,12 @@
       </div>
     </div>
 
-    <!-- 完了モーダル -->
+    <!-- コインゲットモーダル -->
     <div class="modal-overlay" id="modal" style="display:none">
       <div class="modal-box">
         <div class="modal-emoji">🎉</div>
-        <p class="modal-text" id="modalText">おめでとう！<br>コンプリート！</p>
-        <button class="modal-close" id="modalClose">とじる</button>
+        <p class="modal-text" id="modalText">1000コインゲット！</p>
+        <button class="modal-close" id="modalClose">やった！</button>
       </div>
     </div>
 
