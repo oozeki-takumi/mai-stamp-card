@@ -48,6 +48,17 @@ const modalText     = document.getElementById('modalText')
 const modalClose    = document.getElementById('modalClose')
 const particles     = document.getElementById('particles')
 
+// ===== タブ切り替え =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    const cardId = btn.dataset.card
+    document.getElementById('homeStamps').classList.toggle('hidden', cardId !== 'home_card')
+    document.getElementById('togetherStamps').classList.toggle('hidden', cardId !== 'together_card')
+  })
+})
+
 // ===== 管理者判定 =====
 const isAdmin = new URLSearchParams(location.search).get('admin') === '1'
 if (isAdmin) {
@@ -70,19 +81,19 @@ function renderCard(cardId) {
 
   container.innerHTML = ''
   stamps.forEach((label, i) => {
-    const row = document.createElement('div')
-    row.className = 'stamp-row' + (state[i] ? ' stamped' : '')
+    const cell = document.createElement('div')
+    cell.className = 'stamp-cell'
 
-    const icon = document.createElement('span')
-    icon.className = 'stamp-icon'
-    icon.textContent = state[i] ? '🌸' : '○'
+    const slot = document.createElement('div')
+    slot.className = 'stamp-slot' + (state[i] ? ' stamped' : '')
+    slot.textContent = state[i] ? '🌸' : ''
 
-    const text = document.createElement('span')
+    const text = document.createElement('p')
     text.className = 'stamp-label'
     text.textContent = label
 
-    row.appendChild(icon)
-    row.appendChild(text)
+    cell.appendChild(slot)
+    cell.appendChild(text)
 
     // まいちゃん用「お願いする」ボタン
     if (!isAdmin && !state[i]) {
@@ -94,10 +105,10 @@ function renderCard(cardId) {
       btn.textContent = isPending ? 'リクエスト中…' : 'お願いする'
       btn.disabled = isPending
       btn.addEventListener('click', () => requestStamp(cardId, i))
-      row.appendChild(btn)
+      cell.appendChild(btn)
     }
 
-    container.appendChild(row)
+    container.appendChild(cell)
   })
 }
 

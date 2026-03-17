@@ -51,65 +51,93 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
+/* ===== タブ ===== */
+.card-tabs {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: 2px solid #f0bcd4;
+  border-radius: 100px;
+  background: #fff;
+  color: #bbb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(255,126,179,0.4);
+}
+
+/* ===== スタンプカード ===== */
 .stamp-card {
   width: 100%;
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: 0 4px 24px rgba(255, 126, 179, 0.18);
-  padding: 20px 16px;
+  padding: 28px 16px 24px;
 }
 
-.card-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--pink-d);
-  margin-bottom: 14px;
+.hidden {
+  display: none !important;
 }
 
-/* ===== スタンプ行 ===== */
-.stamp-list {
+/* ===== スタンプグリッド ===== */
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stamp-cell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
-.stamp-row {
+/* ===== スタンプ円 ===== */
+.stamp-slot {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px dashed #f0bcd4;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 2px dashed #f0bcd4;
-  background: #fff;
-  transition: border-color 0.3s, background 0.3s;
+  justify-content: center;
+  font-size: 2rem;
+  transition: border-color 0.3s;
 }
 
-.stamp-row.stamped {
-  border: 2px solid var(--pink);
+.stamp-slot.stamped {
+  border: 3px solid var(--pink);
   background: linear-gradient(135deg, #ffe4f0 0%, #ffd6ea 100%);
   animation: pop 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @keyframes pop {
-  0%   { transform: scale(0.97); opacity: 0.5; }
-  60%  { transform: scale(1.02); }
-  100% { transform: scale(1);    opacity: 1; }
-}
-
-.stamp-icon {
-  font-size: 1.3rem;
-  flex-shrink: 0;
-  width: 28px;
-  text-align: center;
+  0%   { transform: scale(0.5); opacity: 0.3; }
+  60%  { transform: scale(1.18); }
+  100% { transform: scale(1);   opacity: 1; }
 }
 
 .stamp-label {
-  flex: 1;
-  font-size: 0.9rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  color: var(--text);
+  text-align: center;
   line-height: 1.4;
 }
 

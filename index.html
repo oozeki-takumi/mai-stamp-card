@@ -13,16 +13,16 @@
     </header>
 
     <main class="cards-wrapper">
-      <!-- おうちスタンプ -->
-      <section class="stamp-card">
-        <h2 class="card-title">🏠 おうちスタンプ</h2>
-        <div class="stamp-list" id="homeStamps"></div>
-      </section>
+      <!-- タブ切り替え -->
+      <div class="card-tabs">
+        <button class="tab-btn active" data-card="home_card">🏠 おうちスタンプ</button>
+        <button class="tab-btn" data-card="together_card">💕 一緒スタンプ</button>
+      </div>
 
-      <!-- 一緒スタンプ -->
+      <!-- カード表示エリア -->
       <section class="stamp-card">
-        <h2 class="card-title">💕 一緒スタンプ</h2>
-        <div class="stamp-list" id="togetherStamps"></div>
+        <div class="stamp-grid" id="homeStamps"></div>
+        <div class="stamp-grid hidden" id="togetherStamps"></div>
       </section>
     </main>
 
