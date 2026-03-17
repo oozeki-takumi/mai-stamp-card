@@ -10,32 +10,41 @@
   <div id="app">
     <header class="header">
       <h1 class="title">まいちゃんスタンプカード</h1>
-      <p class="subtitle">10個集めると特典ゲット！</p>
     </header>
 
-    <main class="card-wrapper">
-      <div class="stamp-card" id="stampCard">
-        <!-- スタンプ枠は JS で動的生成 -->
-      </div>
-      <p class="stamp-count" id="stampCount">スタンプ: 0 / 10</p>
+    <main class="cards-wrapper">
+      <!-- おうちスタンプ -->
+      <section class="stamp-card">
+        <h2 class="card-title">🏠 おうちスタンプ</h2>
+        <div class="stamp-list" id="homeStamps"></div>
+      </section>
+
+      <!-- 一緒スタンプ -->
+      <section class="stamp-card">
+        <h2 class="card-title">💕 一緒スタンプ</h2>
+        <div class="stamp-list" id="togetherStamps"></div>
+      </section>
     </main>
 
-    <!-- 管理者用スタンプボタン（URL に ?admin=1 を付けると表示） -->
+    <!-- 管理者パネル -->
     <div class="admin-panel" id="adminPanel" style="display:none">
-      <button class="btn-stamp" id="btnStamp">スタンプを押す</button>
-      <button class="btn-reset" id="btnReset">リセット</button>
+      <div id="pendingRequests"></div>
+      <div class="admin-resets">
+        <button class="btn-reset" id="btnResetHome">おうちリセット</button>
+        <button class="btn-reset" id="btnResetTogether">一緒リセット</button>
+      </div>
     </div>
 
     <!-- 完了モーダル -->
     <div class="modal-overlay" id="modal" style="display:none">
       <div class="modal-box">
         <div class="modal-emoji">🎉</div>
-        <p class="modal-text">おめでとう！<br>10個コンプリート！</p>
+        <p class="modal-text" id="modalText">おめでとう！<br>コンプリート！</p>
         <button class="modal-close" id="modalClose">とじる</button>
       </div>
     </div>
 
-    <!-- キラキラパーティクル用コンテナ -->
+    <!-- キラキラパーティクル -->
     <div id="particles"></div>
   </div>
 

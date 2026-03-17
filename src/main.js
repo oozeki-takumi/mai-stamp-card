@@ -2,155 +2,256 @@ import { initializeApp } from 'firebase/app'
 import {
   getFirestore,
   doc,
+  collection,
   onSnapshot,
   setDoc,
   updateDoc,
+  addDoc,
+  deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore'
-import { firebaseConfig, COLLECTION, DOCUMENT_ID } from './firebase-config.js'
+import { firebaseConfig } from './firebase-config.js'
+
+// ===== カード定義 =====
+const CARDS = {
+  home_card: {
+    title: '🏠 おうちスタンプ',
+    containerId: 'homeStamps',
+    stamps: [
+      'nanaで配信した',
+      'nanaのフォロワーを10人増やした',
+      '障碍年金のお話を進めた',
+    ],
+  },
+  together_card: {
+    title: '💕 一緒スタンプ',
+    containerId: 'togetherStamps',
+    stamps: [
+      'お部屋のお掃除をした',
+      'たたにマッサージをした',
+      'なんでもいいよ',
+    ],
+  },
+}
 
 // ===== Firebase 初期化 =====
 const app = initializeApp(firebaseConfig)
-const db  = getFirestore(app)
-const cardRef = doc(db, COLLECTION, DOCUMENT_ID)
+const db = getFirestore(app)
 
 // ===== DOM 要素 =====
-const stampCard   = document.getElementById('stampCard')
-const stampCount  = document.getElementById('stampCount')
-const adminPanel  = document.getElementById('adminPanel')
-const btnStamp    = document.getElementById('btnStamp')
-const btnReset    = document.getElementById('btnReset')
-const modal       = document.getElementById('modal')
-const modalClose  = document.getElementById('modalClose')
-const particles   = document.getElementById('particles')
+const adminPanel    = document.getElementById('adminPanel')
+const pendingEl     = document.getElementById('pendingRequests')
+const btnResetHome  = document.getElementById('btnResetHome')
+const btnResetTogether = document.getElementById('btnResetTogether')
+const modal         = document.getElementById('modal')
+const modalText     = document.getElementById('modalText')
+const modalClose    = document.getElementById('modalClose')
+const particles     = document.getElementById('particles')
 
-const TOTAL = 10
-
-// ===== スタンプ枠を生成 =====
-for (let i = 0; i < TOTAL; i++) {
-  const slot = document.createElement('div')
-  slot.className = 'stamp-slot'
-  slot.dataset.index = i
-  stampCard.appendChild(slot)
+// ===== 管理者判定 =====
+const isAdmin = new URLSearchParams(location.search).get('admin') === '1'
+if (isAdmin) {
+  adminPanel.style.display = 'block'
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission()
+  }
 }
 
-// ===== 管理者モード判定（URL に ?admin=1） =====
-const isAdmin = new URLSearchParams(location.search).get('admin') === '1'
-if (isAdmin) adminPanel.style.display = 'flex'
+// ===== State =====
+const cardStates    = { home_card: [false, false, false], together_card: [false, false, false] }
+const completedCards = new Set()
+let pendingRequests = {}
 
-// ===== Firestore リアルタイム監視 =====
-let prevCount = 0
-let modalShown = false
+// ===== カード描画 =====
+function renderCard(cardId) {
+  const { containerId, stamps } = CARDS[cardId]
+  const container = document.getElementById(containerId)
+  const state = cardStates[cardId]
 
-onSnapshot(cardRef, (snapshot) => {
-  if (!snapshot.exists()) {
-    // ドキュメントが無ければ初期化
-    setDoc(cardRef, { count: 0 })
+  container.innerHTML = ''
+  stamps.forEach((label, i) => {
+    const row = document.createElement('div')
+    row.className = 'stamp-row' + (state[i] ? ' stamped' : '')
+
+    const icon = document.createElement('span')
+    icon.className = 'stamp-icon'
+    icon.textContent = state[i] ? '🌸' : '○'
+
+    const text = document.createElement('span')
+    text.className = 'stamp-label'
+    text.textContent = label
+
+    row.appendChild(icon)
+    row.appendChild(text)
+
+    // まいちゃん用「お願いする」ボタン
+    if (!isAdmin && !state[i]) {
+      const isPending = Object.values(pendingRequests).some(
+        r => r.cardId === cardId && r.stampIndex === i
+      )
+      const btn = document.createElement('button')
+      btn.className = 'btn-request' + (isPending ? ' pending' : '')
+      btn.textContent = isPending ? 'リクエスト中…' : 'お願いする'
+      btn.disabled = isPending
+      btn.addEventListener('click', () => requestStamp(cardId, i))
+      row.appendChild(btn)
+    }
+
+    container.appendChild(row)
+  })
+}
+
+// ===== Firestore 監視: カードデータ =====
+Object.keys(CARDS).forEach(cardId => {
+  const ref = doc(db, 'stampCards', cardId)
+  onSnapshot(ref, snap => {
+    if (!snap.exists()) {
+      setDoc(ref, { stamps: [false, false, false] })
+      return
+    }
+    const stamps = snap.data().stamps ?? [false, false, false]
+    const wasComplete = completedCards.has(cardId)
+    cardStates[cardId] = stamps
+    renderCard(cardId)
+
+    // コンプリート判定
+    if (stamps.every(s => s) && !wasComplete) {
+      completedCards.add(cardId)
+      const title = CARDS[cardId].title
+      modalText.innerHTML = `おめでとう！<br>${title}<br>コンプリート！🌸`
+      modal.style.display = 'flex'
+      spawnParticles()
+    }
+  }, err => showError(`Firebase 接続エラー: ${err.message}`))
+})
+
+// ===== Firestore 監視: スタンプリクエスト =====
+let isFirstLoad = true
+onSnapshot(collection(db, 'stampRequests'), snap => {
+  const newRequests = {}
+  snap.forEach(d => { newRequests[d.id] = { ...d.data(), id: d.id } })
+
+  // 管理者への通知（新規リクエストが来たとき）
+  if (!isFirstLoad && isAdmin) {
+    const addedCount = snap.docChanges().filter(c => c.type === 'added').length
+    if (addedCount > 0 && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('まいちゃんからスタンプのお願いが届きました！', {
+        body: 'スタンプカードを確認してください 🌸',
+      })
+    }
+  }
+  isFirstLoad = false
+
+  pendingRequests = newRequests
+
+  // カード再描画（ボタン状態更新）
+  Object.keys(CARDS).forEach(cardId => renderCard(cardId))
+
+  if (isAdmin) renderPendingList()
+}, err => showError(`リクエスト監視エラー: ${err.message}`))
+
+// ===== 管理者: リクエスト一覧 =====
+function renderPendingList() {
+  const list = Object.values(pendingRequests)
+  if (list.length === 0) {
+    pendingEl.innerHTML = '<p class="no-requests">リクエストなし</p>'
     return
   }
 
-  const count = snapshot.data().count ?? 0
-  renderStamps(count)
+  pendingEl.innerHTML = '<h3 class="pending-title">📬 スタンプのお願い</h3>'
+  list.forEach(req => {
+    const cardDef = CARDS[req.cardId]
+    const label = cardDef?.stamps[req.stampIndex] ?? '?'
+    const cardTitle = cardDef?.title ?? req.cardId
 
-  // 新たにスタンプが増えたときだけ演出
-  if (count > prevCount) {
-    spawnParticles()
-  }
+    const item = document.createElement('div')
+    item.className = 'request-item'
 
-  // 10個コンプリート
-  if (count >= TOTAL && !modalShown) {
-    modalShown = true
-    modal.style.display = 'flex'
-  }
+    const info = document.createElement('span')
+    info.textContent = `${cardTitle}：「${label}」`
 
-  prevCount = count
-}, (err) => {
-  showError(`Firebase 接続エラー: ${err.message}`)
-})
+    const btn = document.createElement('button')
+    btn.className = 'btn-stamp'
+    btn.textContent = 'スタンプを押す'
+    btn.addEventListener('click', () => approveRequest(req))
 
-// ===== スタンプ描画 =====
-function renderStamps(count) {
-  stampCount.textContent = `スタンプ: ${count} / ${TOTAL}`
-
-  const slots = stampCard.querySelectorAll('.stamp-slot')
-  slots.forEach((slot, i) => {
-    const filled = i < count
-    if (filled && !slot.classList.contains('stamped')) {
-      slot.classList.add('stamped')
-      slot.textContent = '🌸'
-    } else if (!filled) {
-      slot.classList.remove('stamped')
-      slot.textContent = ''
-    }
+    item.appendChild(info)
+    item.appendChild(btn)
+    pendingEl.appendChild(item)
   })
-
-  if (isAdmin) btnStamp.disabled = count >= TOTAL
 }
 
-// ===== キラキラパーティクル =====
-function spawnParticles() {
-  const colors = ['#ff7eb3', '#ffe066', '#a0e4ff', '#b5f5c8', '#ffb347', '#d4aaff']
-  const count = 24
-
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('div')
-    el.className = 'particle'
-
-    const size  = 6 + Math.random() * 10
-    const angle = Math.random() * 2 * Math.PI
-    const dist  = 80 + Math.random() * 140
-
-    el.style.cssText = `
-      width:  ${size}px;
-      height: ${size}px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      left: ${40 + Math.random() * 20}%;
-      top:  ${30 + Math.random() * 30}%;
-      --tx: ${(Math.cos(angle) * dist).toFixed(1)}px;
-      --ty: ${(Math.sin(angle) * dist).toFixed(1)}px;
-    `
-
-    particles.appendChild(el)
-    el.addEventListener('animationend', () => el.remove())
-  }
-}
-
-// ===== 管理者ボタン =====
-btnStamp.addEventListener('click', async () => {
-  btnStamp.disabled = true
+// ===== スタンプリクエスト送信 =====
+async function requestStamp(cardId, stampIndex) {
   try {
-    const snap = await import('firebase/firestore').then(({ getDoc }) => getDoc(cardRef))
-    const current = snap.exists() ? (snap.data().count ?? 0) : 0
-    if (current < TOTAL) {
-      await updateDoc(cardRef, { count: current + 1 })
-    }
+    await addDoc(collection(db, 'stampRequests'), {
+      cardId,
+      stampIndex,
+      requestedAt: serverTimestamp(),
+    })
   } catch (e) {
-    showError(`スタンプ失敗: ${e.message}`)
-  } finally {
-    // onSnapshot のコールバックで disabled を再設定するのでここでは戻さない
-    btnStamp.disabled = false
+    showError(`リクエスト失敗: ${e.message}`)
   }
+}
+
+// ===== リクエスト承認（スタンプ押す） =====
+async function approveRequest(req) {
+  try {
+    const stamps = [...cardStates[req.cardId]]
+    stamps[req.stampIndex] = true
+    await updateDoc(doc(db, 'stampCards', req.cardId), { stamps })
+    await deleteDoc(doc(db, 'stampRequests', req.id))
+    spawnParticles()
+  } catch (e) {
+    showError(`承認失敗: ${e.message}`)
+  }
+}
+
+// ===== リセットボタン =====
+btnResetHome.addEventListener('click', async () => {
+  if (!confirm('おうちスタンプをリセットしますか？')) return
+  await setDoc(doc(db, 'stampCards', 'home_card'), { stamps: [false, false, false] })
+  completedCards.delete('home_card')
+  modal.style.display = 'none'
 })
 
-btnReset.addEventListener('click', async () => {
-  if (!confirm('スタンプをリセットしますか？')) return
-  try {
-    await setDoc(cardRef, { count: 0 })
-    modalShown = false
-    modal.style.display = 'none'
-  } catch (e) {
-    showError(`リセット失敗: ${e.message}`)
-  }
+btnResetTogether.addEventListener('click', async () => {
+  if (!confirm('一緒スタンプをリセットしますか？')) return
+  await setDoc(doc(db, 'stampCards', 'together_card'), { stamps: [false, false, false] })
+  completedCards.delete('together_card')
+  modal.style.display = 'none'
 })
 
 modalClose.addEventListener('click', () => {
   modal.style.display = 'none'
 })
 
+// ===== キラキラパーティクル =====
+function spawnParticles() {
+  const colors = ['#ff7eb3', '#ffe066', '#a0e4ff', '#b5f5c8', '#ffb347', '#d4aaff']
+  for (let i = 0; i < 24; i++) {
+    const el = document.createElement('div')
+    el.className = 'particle'
+    const size  = 6 + Math.random() * 10
+    const angle = Math.random() * 2 * Math.PI
+    const dist  = 80 + Math.random() * 140
+    el.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      left: ${40 + Math.random() * 20}%;
+      top: ${30 + Math.random() * 30}%;
+      --tx: ${(Math.cos(angle) * dist).toFixed(1)}px;
+      --ty: ${(Math.sin(angle) * dist).toFixed(1)}px;
+    `
+    particles.appendChild(el)
+    el.addEventListener('animationend', () => el.remove())
+  }
+}
+
 // ===== エラー表示 =====
 function showError(msg) {
   const existing = document.querySelector('.error-banner')
   if (existing) existing.remove()
-
   const banner = document.createElement('div')
   banner.className = 'error-banner'
   banner.textContent = msg
