@@ -16,6 +16,10 @@ export default {
     // AI チャットエンドポイント
     if (url.pathname === '/api/chat' && request.method === 'POST') {
       try {
+        if (!env.ANTHROPIC_API_KEY) {
+          throw new Error('APIキー未設定。wrangler secret put ANTHROPIC_API_KEY を実行してください')
+        }
+
         const { message, hunger, coins, isGrumpy } = await request.json()
 
         const h = Math.min(24, Math.max(0, hunger ?? 24))
