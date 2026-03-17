@@ -37,39 +37,58 @@ const CARDS = {
 
 // ===== ハムスターセリフ =====
 const SPEECH = {
-  hungry:  ['腹減ったわ〜！', 'めし食わせてくれへん？', 'もうアカン…腹ペコや', 'はよ食わせてや〜'],
-  normal:  ['やあやあ！', 'まあまあ元気やで〜', 'ひまやなあ', 'なんかせえへんか〜', 'おっさん暇やで！'],
-  full:    ['うまかったわ〜！', '満腹や〜！', 'ありがとさん！', 'ええ気分やで〜💕'],
-  stamped: ['よっしゃ！🌸', 'ナイスやないか！', 'やるやんけ〜！'],
+  hungry:   ['腹減ったわ〜！', 'めし食わせてくれへん？', 'もうアカン…腹ペコや', 'はよ食わせてや〜', 'ごはん…ごはん…'],
+  normal:   ['やあやあ！', 'まあまあ元気やで〜', 'ひまやなあ', 'なんかせえへんか〜', 'おっさん暇やで！'],
+  full:     ['うまかったわ〜！', '満腹や〜！', 'ありがとさん！', 'ええ気分やで〜💕'],
+  fed:      ['ひまわりの種や〜！最高やで〜！！', 'これこれ！これが食べたかってん！', 'うまいうまい！やっぱ種は最高やな！', 'もっとくれてもええんやで〜？', 'やったー！種や！種！大好きやねん！'],
+  stamped:  ['よっしゃ！🌸', 'ナイスやないか！', 'やるやんけ〜！'],
+  sleepy:   ['zzz…', 'すやすや…', '💤'],
+  woken:    ['うるさいわ！起こすなや！', 'もうちょい寝かせてや〜！', 'ねむい…ほっといてくれ…'],
+  grumpy:   ['うるさいわ！', 'ほっといてくれ…', 'めんどくさいなあ', 'きっつい顔しとるで'],
+  starving: ['…', 'うごけへん…', '☆０や…もうあかん'],
 }
 
 // ===== Firebase 初期化 =====
 const app = initializeApp(firebaseConfig)
 const db  = getFirestore(app)
 
+// ===== BGM =====
+const bgm = document.getElementById('bgm')
+let bgmStarted = false
+function startBGM() {
+  if (bgmStarted) return
+  bgm.play().then(() => { bgmStarted = true }).catch(() => {})
+}
+document.addEventListener('click', startBGM, { once: true })
+document.addEventListener('touchstart', startBGM, { once: true })
+
 // ===== DOM 要素 =====
-const adminPanel      = document.getElementById('adminPanel')
-const pendingEl       = document.getElementById('pendingRequests')
-const btnResetHome    = document.getElementById('btnResetHome')
-const btnResetTogether= document.getElementById('btnResetTogether')
-const modal           = document.getElementById('modal')
-const modalText       = document.getElementById('modalText')
-const modalClose      = document.getElementById('modalClose')
-const particles       = document.getElementById('particles')
-const submitArea      = document.getElementById('submitArea')
-const btnSubmit       = document.getElementById('btnSubmit')
-const coinsDisplay    = document.getElementById('coinsDisplay')
-const levelDisplay    = document.getElementById('levelDisplay')
-const feedDisplay     = document.getElementById('feedDisplay')
-const hungerFill      = document.getElementById('hungerFill')
-const hungerPct       = document.getElementById('hungerPct')
-const btnBuyFeed      = document.getElementById('btnBuyFeed')
-const btnGiveFeed     = document.getElementById('btnGiveFeed')
-const speechBubble    = document.getElementById('speechBubble')
-const hamsterX        = document.getElementById('hamsterX')
-const hamsterSprite   = document.getElementById('hamsterSprite')
-const chatInput       = document.getElementById('chatInput')
-const btnChatSend     = document.getElementById('btnChatSend')
+const adminPanel       = document.getElementById('adminPanel')
+const pendingEl        = document.getElementById('pendingRequests')
+const btnResetHome     = document.getElementById('btnResetHome')
+const btnResetTogether = document.getElementById('btnResetTogether')
+const btnAddCoins      = document.getElementById('btnAddCoins')
+const btnResetCoins    = document.getElementById('btnResetCoins')
+const modal            = document.getElementById('modal')
+const modalText        = document.getElementById('modalText')
+const modalClose       = document.getElementById('modalClose')
+const particles        = document.getElementById('particles')
+const submitArea       = document.getElementById('submitArea')
+const btnSubmit        = document.getElementById('btnSubmit')
+const coinsDisplay     = document.getElementById('coinsDisplay')
+const shopCoinsDisplay = document.getElementById('shopCoinsDisplay')
+const hungerStars      = document.getElementById('hungerStars')
+const hungerCount      = document.getElementById('hungerCount')
+const itemList         = document.getElementById('itemList')
+const btnShop          = document.getElementById('btnShop')
+const shopModal        = document.getElementById('shopModal')
+const btnShopClose     = document.getElementById('btnShopClose')
+const speechBubble     = document.getElementById('speechBubble')
+const hamsterX         = document.getElementById('hamsterX')
+const hamsterSprite    = document.getElementById('hamsterSprite')
+const chatInput        = document.getElementById('chatInput')
+const btnChatSend      = document.getElementById('btnChatSend')
+const sleepOverlay     = document.getElementById('sleepOverlay')
 
 // ===== タブ切り替え =====
 let activeCardId = 'home_card'
@@ -94,9 +113,24 @@ if (isAdmin) {
 }
 
 // ===== State =====
-const cardStates     = { home_card: [false, false, false], together_card: [false, false, false] }
-let pendingRequests  = {}
-let hamsterData      = { coins: 0, exp: 0, hunger: 50, feed: 0 }
+const cardStates    = { home_card: [false, false, false], together_card: [false, false, false] }
+let pendingRequests = {}
+let hamsterData     = {
+  coins: 0,
+  hunger: 24,
+  seedSmall: 0,
+  seedMedium: 0,
+  seedLarge: 0,
+  lastHungerUpdate: null,
+  sleeping: false,
+  sleepUntil: null,
+  nextSleepAt: null,
+  grumpyUntil: null,
+}
+
+// ===== 睡眠タイミング乱数 =====
+function randomSleepDelay()    { return (1 + Math.random() * 5) * 60 * 60 * 1000 }   // 1〜6時間後
+function randomSleepDuration() { return (0.5 + Math.random() * 1.5) * 60 * 60 * 1000 } // 30〜120分
 
 // ===== 提出ボタン表示制御 =====
 function updateSubmitButton() {
@@ -176,33 +210,261 @@ onSnapshot(collection(db, 'stampRequests'), snap => {
 
 // ===== Firestore 監視: ハムスターデータ =====
 const hamsterRef = doc(db, 'hamster', 'data')
+let periodicCheckScheduled = false
+
 onSnapshot(hamsterRef, snap => {
   if (!snap.exists()) {
-    setDoc(hamsterRef, { coins: 0, exp: 0, hunger: 50, feed: 0 })
+    const now = Date.now()
+    setDoc(hamsterRef, {
+      coins: 0,
+      hunger: 10,
+      seedSmall: 0,
+      seedMedium: 0,
+      seedLarge: 0,
+      lastHungerUpdate: now,
+      sleeping: false,
+      sleepUntil: null,
+      nextSleepAt: now + randomSleepDelay(),
+      grumpyUntil: null,
+    })
     return
   }
-  hamsterData = { coins: 0, exp: 0, hunger: 50, feed: 0, ...snap.data() }
+
+  const data = snap.data()
+  // 旧データ（hunger > 24）の変換
+  let hunger = data.hunger ?? 24
+  if (hunger > 24) hunger = Math.min(24, Math.round(hunger / 4.17))
+
+  hamsterData = {
+    coins: 0,
+    hunger: 24,
+    seedSmall: 0,
+    seedMedium: 0,
+    seedLarge: 0,
+    lastHungerUpdate: null,
+    sleeping: false,
+    sleepUntil: null,
+    nextSleepAt: null,
+    grumpyUntil: null,
+    ...data,
+    hunger,
+  }
+
   renderHamsterStats()
+
+  // スナップショット外で空腹・睡眠チェック（ループ防止）
+  if (!periodicCheckScheduled) {
+    periodicCheckScheduled = true
+    setTimeout(() => {
+      checkHungerDecrease()
+      checkSleep()
+      periodicCheckScheduled = false
+    }, 0)
+  }
 }, err => showError(`ハムスターデータエラー: ${err.message}`))
+
+// ===== 空腹度減少チェック（1時間ごとに☆1減） =====
+function checkHungerDecrease() {
+  const now = Date.now()
+  if (!hamsterData.lastHungerUpdate) {
+    updateDoc(hamsterRef, { lastHungerUpdate: now }).catch(() => {})
+    return
+  }
+  const elapsed = now - hamsterData.lastHungerUpdate
+  const hoursElapsed = Math.floor(elapsed / (60 * 60 * 1000))
+  if (hoursElapsed > 0 && hamsterData.hunger > 0) {
+    const newHunger = Math.max(0, hamsterData.hunger - hoursElapsed)
+    const newLastUpdate = hamsterData.lastHungerUpdate + hoursElapsed * 60 * 60 * 1000
+    updateDoc(hamsterRef, { hunger: newHunger, lastHungerUpdate: newLastUpdate }).catch(() => {})
+  }
+}
+
+// ===== 睡眠チェック =====
+function checkSleep() {
+  const now = Date.now()
+  if (hamsterData.sleeping) {
+    if (hamsterData.sleepUntil && now > hamsterData.sleepUntil) {
+      updateDoc(hamsterRef, {
+        sleeping: false,
+        sleepUntil: null,
+        nextSleepAt: now + randomSleepDelay(),
+      }).catch(() => {})
+    }
+  } else {
+    if (!hamsterData.nextSleepAt) {
+      updateDoc(hamsterRef, { nextSleepAt: now + randomSleepDelay() }).catch(() => {})
+    } else if (now > hamsterData.nextSleepAt) {
+      updateDoc(hamsterRef, {
+        sleeping: true,
+        sleepUntil: now + randomSleepDuration(),
+        nextSleepAt: null,
+      }).catch(() => {})
+    }
+  }
+}
+
+// ===== 定期チェック（1分ごと） =====
+setInterval(() => {
+  checkHungerDecrease()
+  checkSleep()
+}, 60 * 1000)
+
+// ===== ハムスター画像選択 =====
+function getHamsterImage() {
+  if (hamsterData.sleeping) return '/hamster_bed.png'
+  const h = hamsterData.hunger
+  if (h === 0)  return '/hamster_kuufuku.png'
+  if (h === 24) return '/hamster.gokigen.png'
+  if (h >= 11)  return '/hamster.png'
+  return '/hamster.hukigen.png'
+}
 
 // ===== ハムスターステータス描画 =====
 function renderHamsterStats() {
-  const { coins, exp, hunger, feed } = hamsterData
-  const level = Math.floor(exp / 100) + 1
-  const h = Math.min(100, Math.max(0, hunger))
+  const { coins, hunger, seedSmall, seedMedium, seedLarge, sleeping } = hamsterData
+  const h = Math.min(24, Math.max(0, hunger))
 
-  coinsDisplay.textContent = coins
-  levelDisplay.textContent = level
-  feedDisplay.textContent  = feed
-  hungerFill.style.width   = h + '%'
-  hungerPct.textContent    = h + '%'
+  coinsDisplay.textContent     = coins
+  shopCoinsDisplay.textContent = coins
+  hungerCount.textContent      = `${h}/24`
 
-  // 空腹度で色変化
-  hungerFill.style.background = h < 30 ? '#ff6b6b' : h > 70 ? '#4caf50' : '#ffb347'
+  // ☆星表示
+  hungerStars.innerHTML = ''
+  for (let i = 0; i < 24; i++) {
+    const star = document.createElement('span')
+    star.className = 'star-icon' + (i < h ? ' filled' : '')
+    star.textContent = i < h ? '★' : '☆'
+    hungerStars.appendChild(star)
+  }
 
-  btnBuyFeed.disabled  = coins < 100
-  btnGiveFeed.disabled = feed <= 0
+  // ハムスター画像
+  hamsterSprite.src = getHamsterImage()
+
+  // 睡眠オーバーレイ・アニメーション
+  sleepOverlay.style.display = sleeping ? 'flex' : 'none'
+  hamsterX.style.animationPlayState = sleeping ? 'paused' : 'running'
+
+  // チャット無効（空腹☆0のみ不可、睡眠中は起こせる）
+  const chatDisabled = h === 0
+  chatInput.disabled = chatDisabled
+  btnChatSend.disabled = chatDisabled
+  if (h === 0) {
+    chatInput.placeholder = '（ハムスターが動かない…）'
+  } else if (sleeping) {
+    chatInput.placeholder = '（タップで起こす）'
+  } else {
+    chatInput.placeholder = '話しかける…'
+  }
+
+  // ショップボタンの有効/無効
+  document.querySelectorAll('.btn-buy-seed').forEach(btn => {
+    btn.disabled = coins < parseInt(btn.dataset.price)
+  })
+
+  // アイテム欄
+  renderItemBag(seedSmall, seedMedium, seedLarge)
 }
+
+// ===== アイテム欄 =====
+function renderItemBag(seedSmall, seedMedium, seedLarge) {
+  itemList.innerHTML = ''
+  const items = [
+    { key: 'seedSmall',  name: 'ひまわりの種（小）', recover: 8,  count: seedSmall,  emoji: '🌱' },
+    { key: 'seedMedium', name: 'ひまわりの種（中）', recover: 15, count: seedMedium, emoji: '🌿' },
+    { key: 'seedLarge',  name: 'ひまわりの種（大）', recover: 24, count: seedLarge,  emoji: '🌻' },
+  ]
+  let hasAny = false
+  items.forEach(item => {
+    if (item.count <= 0) return
+    hasAny = true
+    const div = document.createElement('div')
+    div.className = 'item-row'
+    const nameEl   = document.createElement('span')
+    nameEl.className = 'item-name'
+    nameEl.textContent = `${item.emoji} ${item.name}`
+    const countEl  = document.createElement('span')
+    countEl.className = 'item-count'
+    countEl.textContent = `×${item.count}`
+    const useBtn   = document.createElement('button')
+    useBtn.className = 'btn-use-item'
+    useBtn.textContent = 'あげる'
+    useBtn.addEventListener('click', () => useItem(item.key, item.recover))
+    div.appendChild(nameEl)
+    div.appendChild(countEl)
+    div.appendChild(useBtn)
+    itemList.appendChild(div)
+  })
+  if (!hasAny) {
+    itemList.innerHTML = '<p class="item-empty">アイテムなし</p>'
+  }
+}
+
+// ===== アイテム使用 =====
+async function useItem(key, recoverAmount) {
+  if (hamsterData[key] <= 0) return
+  if (hamsterData.hunger === 0) {
+    showSpeech('starving')
+    return
+  }
+  const newHunger = Math.min(24, hamsterData.hunger + recoverAmount)
+  try {
+    const update = { hunger: newHunger, lastHungerUpdate: Date.now() }
+    update[key] = increment(-1)
+    await updateDoc(hamsterRef, update)
+    showSpeech('fed')
+    spawnParticles()
+  } catch (e) {
+    showError(`エサ失敗: ${e.message}`)
+  }
+}
+
+// ===== ショップ =====
+btnShop.addEventListener('click', () => {
+  shopModal.style.display = 'flex'
+})
+btnShopClose.addEventListener('click', () => {
+  shopModal.style.display = 'none'
+})
+shopModal.addEventListener('click', e => {
+  if (e.target === shopModal) shopModal.style.display = 'none'
+})
+
+document.querySelectorAll('.btn-buy-seed').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const key   = btn.dataset.key
+    const price = parseInt(btn.dataset.price)
+    if (hamsterData.coins < price) return
+    btn.disabled = true
+    try {
+      const update = { coins: increment(-price) }
+      update[key] = increment(1)
+      await updateDoc(hamsterRef, update)
+    } catch (e) {
+      showError(`購入失敗: ${e.message}`)
+    } finally {
+      btn.disabled = false
+    }
+  })
+})
+
+// ===== お試し用 1000コイン追加（管理者） =====
+btnAddCoins.addEventListener('click', async () => {
+  try {
+    await updateDoc(hamsterRef, { coins: increment(1000) })
+  } catch (e) {
+    showError(`コイン追加失敗: ${e.message}`)
+  }
+})
+
+// ===== コインを0にリセット（管理者） =====
+btnResetCoins.addEventListener('click', async () => {
+  if (!confirm('コインを0にリセットしますか？')) return
+  try {
+    await updateDoc(hamsterRef, { coins: 0 })
+  } catch (e) {
+    showError(`コインリセット失敗: ${e.message}`)
+  }
+})
 
 // ===== 提出ボタン =====
 btnSubmit.addEventListener('click', async () => {
@@ -221,39 +483,6 @@ btnSubmit.addEventListener('click', async () => {
   }
 })
 
-// ===== 餌を買う =====
-btnBuyFeed.addEventListener('click', async () => {
-  if (hamsterData.coins < 100) return
-  btnBuyFeed.disabled = true
-  try {
-    await updateDoc(hamsterRef, { coins: increment(-100), feed: increment(1) })
-  } catch (e) {
-    showError(`購入失敗: ${e.message}`)
-  } finally {
-    btnBuyFeed.disabled = false
-  }
-})
-
-// ===== 餌をあげる =====
-btnGiveFeed.addEventListener('click', async () => {
-  if (hamsterData.feed <= 0) return
-  btnGiveFeed.disabled = true
-  const newHunger = Math.min(100, hamsterData.hunger + 20)
-  try {
-    await updateDoc(hamsterRef, {
-      feed:   increment(-1),
-      exp:    increment(20),
-      hunger: newHunger,
-    })
-    showSpeech('full')
-    spawnParticles()
-  } catch (e) {
-    showError(`エサ失敗: ${e.message}`)
-  } finally {
-    btnGiveFeed.disabled = false
-  }
-})
-
 // ===== 管理者: リクエスト一覧 =====
 function renderPendingList() {
   const list = Object.values(pendingRequests)
@@ -263,9 +492,9 @@ function renderPendingList() {
   }
   pendingEl.innerHTML = '<h3 class="pending-title">📬 スタンプのお願い</h3>'
   list.forEach(req => {
-    const cardDef  = CARDS[req.cardId]
-    const label    = cardDef?.stamps[req.stampIndex] ?? '?'
-    const cardTitle= cardDef?.title ?? req.cardId
+    const cardDef   = CARDS[req.cardId]
+    const label     = cardDef?.stamps[req.stampIndex] ?? '?'
+    const cardTitle = cardDef?.title ?? req.cardId
     const item = document.createElement('div')
     item.className = 'request-item'
     const info = document.createElement('span')
@@ -327,9 +556,16 @@ function showSpeech(mood) {
 }
 
 function autoSpeech() {
-  const h = hamsterData.hunger
-  const mood = h < 30 ? 'hungry' : h > 70 ? 'full' : 'normal'
-  showSpeech(mood)
+  const h   = hamsterData.hunger
+  const now = Date.now()
+
+  if (hamsterData.sleeping) { showSpeech('sleepy'); return }
+  if (h === 0)              { showSpeech('starving'); return }
+  if (hamsterData.grumpyUntil && now < hamsterData.grumpyUntil) { showSpeech('grumpy'); return }
+
+  if (h === 24)     showSpeech('full')
+  else if (h <= 10) showSpeech('hungry')
+  else              showSpeech('normal')
 }
 autoSpeech()
 setInterval(autoSpeech, 7000)
@@ -361,21 +597,36 @@ async function sendChatMessage() {
   const message = chatInput.value.trim()
   if (!message) return
 
-  btnChatSend.disabled = true
-  chatInput.disabled = true
+  // 空腹☆0は会話不可
+  if (hamsterData.hunger === 0) return
 
-  // 考え中セリフ
+  // 寝てる時は起こす
+  if (hamsterData.sleeping) {
+    const grumpyDuration = 5 * 60 * 1000 // 5分間不機嫌
+    await updateDoc(hamsterRef, {
+      sleeping: false,
+      sleepUntil: null,
+      grumpyUntil: Date.now() + grumpyDuration,
+      nextSleepAt: Date.now() + randomSleepDelay(),
+    }).catch(() => {})
+    chatInput.value = ''
+    showSpeech('woken')
+    return
+  }
+
+  btnChatSend.disabled = true
+  chatInput.disabled   = true
   speechBubble.textContent = 'ちょっと待ちいや〜'
   speechBubble.classList.add('pop')
   setTimeout(() => speechBubble.classList.remove('pop'), 400)
 
   try {
-    const { hunger, exp, coins } = hamsterData
-    const level = Math.floor(exp / 100) + 1
+    const { hunger, coins } = hamsterData
+    const isGrumpy = !!(hamsterData.grumpyUntil && Date.now() < hamsterData.grumpyUntil)
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, hunger, level, coins }),
+      body: JSON.stringify({ message, hunger, coins, isGrumpy }),
     })
     const data = await res.json()
     speechBubble.textContent = data.reply
@@ -386,7 +637,7 @@ async function sendChatMessage() {
     speechBubble.textContent = 'うまいこと話せんかったわ…'
   } finally {
     btnChatSend.disabled = false
-    chatInput.disabled = false
+    chatInput.disabled   = false
     chatInput.focus()
   }
 }

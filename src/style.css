@@ -371,6 +371,16 @@ body {
   gap: 14px;
 }
 
+/* ===== ハムスター名前 ===== */
+.hamster-name-title {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--pink-d);
+  padding: 4px 0 2px;
+  letter-spacing: 0.05em;
+}
+
 /* ===== ハムスターアリーナ ===== */
 .hamster-arena {
   position: relative;
@@ -379,6 +389,22 @@ body {
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid #f0bcd4;
+}
+
+/* ===== 睡眠オーバーレイ ===== */
+.sleep-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 20, 60, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 12px;
+  z-index: 5;
+  letter-spacing: 0.05em;
 }
 
 /* 吹き出し */
@@ -462,79 +488,269 @@ body {
 .hunger-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .hunger-label {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 1rem;
   white-space: nowrap;
 }
 
-.hunger-bar {
+/* ===== ☆星表示 ===== */
+.hunger-stars {
   flex: 1;
-  height: 14px;
-  background: #f0e0ea;
-  border-radius: 100px;
-  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  line-height: 1;
 }
 
-.hunger-fill {
-  height: 100%;
-  border-radius: 100px;
-  background: #ffb347;
-  transition: width 0.4s ease, background 0.4s ease;
+.star-icon {
+  font-size: 0.58rem;
+  color: #ddd;
+  line-height: 1;
 }
 
-.hunger-pct {
-  font-size: 0.8rem;
+.star-icon.filled {
+  color: #f5c518;
+}
+
+.hunger-count {
+  font-size: 0.78rem;
   font-weight: 700;
   color: #999;
   min-width: 36px;
   text-align: right;
+  white-space: nowrap;
 }
 
-/* ===== 餌ボタン ===== */
-.hamster-actions {
+/* ===== アイテム欄 ===== */
+.item-bag {
+  background: #fdf0f7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid #f0bcd4;
+}
+
+.item-bag-header {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.btn-buy-feed,
-.btn-give-feed {
-  flex: 1;
-  padding: 10px 8px;
-  border: none;
-  border-radius: 100px;
+.item-bag-title {
   font-size: 0.85rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.1s, opacity 0.2s;
+  color: var(--pink-d);
 }
 
-.btn-buy-feed {
+.btn-shop {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
   background: var(--yellow);
   color: #7a5800;
-  box-shadow: 0 2px 8px rgba(255,224,102,0.5);
+  box-shadow: 0 2px 8px rgba(255,224,102,0.4);
+  transition: transform 0.1s;
 }
 
-.btn-give-feed {
-  background: #b5f5c8;
-  color: #1a6635;
-  box-shadow: 0 2px 8px rgba(100,220,140,0.4);
-}
-
-.btn-buy-feed:active,
-.btn-give-feed:active {
+.btn-shop:active {
   transform: scale(0.95);
 }
 
-.btn-buy-feed:disabled,
-.btn-give-feed:disabled {
-  opacity: 0.45;
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-empty {
+  font-size: 0.8rem;
+  color: #bbb;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  border: 1px solid #f0bcd4;
+}
+
+.item-name {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.item-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #999;
+  min-width: 24px;
+  text-align: right;
+}
+
+.btn-use-item {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #b5f5c8;
+  color: #1a6635;
+  transition: transform 0.1s;
+}
+
+.btn-use-item:active {
+  transform: scale(0.95);
+}
+
+/* ===== ショップモーダル ===== */
+.shop-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+.shop-box {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 24px;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 8px 40px rgba(255,126,179,0.3);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shop-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--pink-d);
+  text-align: center;
+}
+
+.shop-coins {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7a5800;
+  text-align: center;
+  background: #fffbe6;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.shop-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fdf0f7;
+  border-radius: 12px;
+  border: 1px solid #f0bcd4;
+}
+
+.shop-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shop-item-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.shop-item-effect {
+  font-size: 0.72rem;
+  color: #f5c518;
+  font-weight: 700;
+}
+
+.shop-item-buy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.shop-item-price {
+  font-size: 0.72rem;
+  color: #7a5800;
+  font-weight: 700;
+}
+
+.btn-buy-seed {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--pink);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(255,126,179,0.4);
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-buy-seed:active {
+  transform: scale(0.95);
+}
+
+.btn-buy-seed:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
+}
+
+.btn-shop-close {
+  padding: 10px;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #eee;
+  color: #666;
+  transition: transform 0.1s;
+}
+
+.btn-shop-close:active {
+  transform: scale(0.95);
+}
+
+/* ===== 管理者 1000コインボタン ===== */
+.btn-add-coins {
+  background: #fffbe6 !important;
+  color: #7a5800 !important;
+  border: 1px solid #f5c518 !important;
 }
 
 /* ===== ハムスターチャット ===== */

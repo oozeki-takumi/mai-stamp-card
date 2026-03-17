@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
+  <!-- BGM -->
+  <audio id="bgm" src="/BGM.mp3" loop></audio>
+
   <div id="app">
     <header class="header">
       <h1 class="title">まいちゃんスタンプカード</h1>
@@ -32,7 +35,9 @@
 
     <!-- ハムスターセクション -->
     <section class="hamster-section">
+      <div class="hamster-name-title">🐹 だいふく</div>
       <div class="hamster-arena" id="hamsterArena">
+        <div class="sleep-overlay" id="sleepOverlay">😴 おやすみ中…</div>
         <div class="speech-bubble" id="speechBubble">ちゅっちゅ！</div>
         <div class="hamster-x" id="hamsterX">
           <div class="hamster-y">
@@ -40,24 +45,31 @@
           </div>
         </div>
       </div>
+
+      <!-- ステータス -->
       <div class="hamster-stats">
         <div class="stat-row">
           <span class="stat-item">💰 <span id="coinsDisplay">0</span> コイン</span>
-          <span class="stat-item">⭐ Lv.<span id="levelDisplay">1</span></span>
-          <span class="stat-item">🌾 ×<span id="feedDisplay">0</span></span>
         </div>
         <div class="hunger-row">
-          <span class="hunger-label">🍴 満腹</span>
-          <div class="hunger-bar">
-            <div class="hunger-fill" id="hungerFill" style="width:50%"></div>
-          </div>
-          <span class="hunger-pct" id="hungerPct">50%</span>
+          <span class="hunger-label">🌟</span>
+          <div class="hunger-stars" id="hungerStars"></div>
+          <span class="hunger-count" id="hungerCount">24/24</span>
         </div>
       </div>
-      <div class="hamster-actions">
-        <button class="btn-buy-feed" id="btnBuyFeed">餌を買う (-100コイン)</button>
-        <button class="btn-give-feed" id="btnGiveFeed">餌をあげる 🌾</button>
+
+      <!-- アイテム欄 + ショップボタン -->
+      <div class="item-bag">
+        <div class="item-bag-header">
+          <span class="item-bag-title">🎒 アイテム欄</span>
+          <button class="btn-shop" id="btnShop">🌻 ショップ</button>
+        </div>
+        <div class="item-list" id="itemList">
+          <p class="item-empty">アイテムなし</p>
+        </div>
       </div>
+
+      <!-- チャット -->
       <div class="hamster-chat">
         <input class="chat-input" id="chatInput" type="text" placeholder="話しかける…" maxlength="100" />
         <button class="btn-chat-send" id="btnChatSend">送信</button>
@@ -70,6 +82,8 @@
       <div class="admin-resets">
         <button class="btn-reset" id="btnResetHome">おうちリセット</button>
         <button class="btn-reset" id="btnResetTogether">一緒リセット</button>
+        <button class="btn-reset btn-add-coins" id="btnAddCoins">💰 1000コイン追加</button>
+        <button class="btn-reset btn-reset-coins" id="btnResetCoins">💰 コインを0にリセット</button>
       </div>
     </div>
 
@@ -79,6 +93,47 @@
         <div class="modal-emoji">🎉</div>
         <p class="modal-text" id="modalText">1000コインゲット！</p>
         <button class="modal-close" id="modalClose">やった！</button>
+      </div>
+    </div>
+
+    <!-- ショップモーダル -->
+    <div class="shop-modal" id="shopModal" style="display:none">
+      <div class="shop-box">
+        <h3 class="shop-title">🌻 ひまわりショップ</h3>
+        <p class="shop-coins">所持コイン：💰 <span id="shopCoinsDisplay">0</span></p>
+        <div class="shop-item-list">
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <span class="shop-item-name">🌱 ひまわりの種（小）</span>
+              <span class="shop-item-effect">★ +8 回復</span>
+            </div>
+            <div class="shop-item-buy">
+              <span class="shop-item-price">100コイン</span>
+              <button class="btn-buy-seed" data-key="seedSmall" data-price="100">買う</button>
+            </div>
+          </div>
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <span class="shop-item-name">🌿 ひまわりの種（中）</span>
+              <span class="shop-item-effect">★ +15 回復</span>
+            </div>
+            <div class="shop-item-buy">
+              <span class="shop-item-price">200コイン</span>
+              <button class="btn-buy-seed" data-key="seedMedium" data-price="200">買う</button>
+            </div>
+          </div>
+          <div class="shop-item">
+            <div class="shop-item-info">
+              <span class="shop-item-name">🌻 ひまわりの種（大）</span>
+              <span class="shop-item-effect">★ +24 回復</span>
+            </div>
+            <div class="shop-item-buy">
+              <span class="shop-item-price">300コイン</span>
+              <button class="btn-buy-seed" data-key="seedLarge" data-price="300">買う</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-shop-close" id="btnShopClose">閉じる</button>
       </div>
     </div>
 
