@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  plugins: [],
   build: {
     outDir: 'dist',
-    // Cloudflare Pages は dist フォルダをそのまま公開できる
   },
 })
