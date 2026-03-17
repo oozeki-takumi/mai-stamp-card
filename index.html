@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>まいちゃんスタンプカード</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <h1 class="title">まいちゃんスタンプカード</h1>
+      <p class="subtitle">10個集めると特典ゲット！</p>
+    </header>
+
+    <main class="card-wrapper">
+      <div class="stamp-card" id="stampCard">
+        <!-- スタンプ枠は JS で動的生成 -->
+      </div>
+      <p class="stamp-count" id="stampCount">スタンプ: 0 / 10</p>
+    </main>
+
+    <!-- 管理者用スタンプボタン（URL に ?admin=1 を付けると表示） -->
+    <div class="admin-panel" id="adminPanel" style="display:none">
+      <button class="btn-stamp" id="btnStamp">スタンプを押す</button>
+      <button class="btn-reset" id="btnReset">リセット</button>
+    </div>
+
+    <!-- 完了モーダル -->
+    <div class="modal-overlay" id="modal" style="display:none">
+      <div class="modal-box">
+        <div class="modal-emoji">🎉</div>
+        <p class="modal-text">おめでとう！<br>10個コンプリート！</p>
+        <button class="modal-close" id="modalClose">とじる</button>
+      </div>
+    </div>
+
+    <!-- キラキラパーティクル用コンテナ -->
+    <div id="particles"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
